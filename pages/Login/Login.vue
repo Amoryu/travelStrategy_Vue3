@@ -135,9 +135,12 @@ s
   import { ref } from 'vue';
   import md5 from 'js-md5';
   import { usePromisic } from '../../hooks/usePromisic.js';
+  import { useWechatAPI } from '../../hooks/useWechatAPI.js';
   import { register, login } from '../../api/modules/user.js';
-
+  import request from '../../api/index.js';
   const { Promisic } = usePromisic();
+  const { Toast } = useWechatAPI();
+  
   const token = ref(''); //账号密码登录返回的token
   const wxtoken = ref(''); //微信登录返回的openid
   onLoad(() => {
@@ -149,7 +152,7 @@ s
     }
   });
 
-  const current = ref('');
+  const current = ref(1);
   const registerForm = ref({
     username: '',
     password: '',
@@ -175,104 +178,88 @@ s
   const wxAvatar = ref('');
 
   const handleWxAuth = async () => {
-    wx.showLoading();
     if (!isAgree.value) {
-      return wx.showToast({ title: '请勾选服务协议', icon: 'error' });
+      return Toast.error('请勾选服务协议')
     }
     // if (wxtoken.value) {
     //   return wx.reLaunch({ url: '/pages/user/user' });
     // }
+    wx.showLoading();
     const data = await Promisic(wx.getSetting)();
     if(data.authSetting['scope.userInfo']){
       const res = await Promisic(wx.login)();
-      const result = await Promisic(wx.request) ({ url: `http://192.168.1.100:8098/api/wechat/auth`, method: 'GET', data: { code: res.code } });
-      
-      if (result.data.code !== 200) {
-        return wx.showToast({
-          icon: 'error',
-          title: '微信登录未授权!',
-        });
+      const result = await request.get(`/wechat/auth`,{ code: res.code })
+      console.log(result)
+      if (result.code !== 200) {
+        return Toast.error('微信登录未授权!')
       }
       wx.hideLoading();
       wx.setStorage({ key: 'token', data: '' });
-      wxtoken.value = result.data.data[0].wxtoken;
+      wxtoken.value = result.data[0].wxtoken;
       wx.setStorage({ key: 'wxtoken', data: wxtoken.value });
       showWxAuth.value = true;
     }
   };
 
-  const handleWxLogin = (e) => {
-    wx.request({
-      url: `http://192.168.1.100:8098/api/user/wechat`,
-      method: 'POST',
-      data: {
-        name: wxNickname.value,
-        avatar: wxAvatar.value,
-        wxtoken: wxtoken.value,
-      },
-      success: (res) => {
-        if (res.data.code !== 200) {
-          wx.showToast({ icon: 'error', title: '微信登录失败!' });
-          return;
-        }
-        wx.setStorage({ key: 'wxtoken', data: res.data.data.wxtoken });
-        wx.reLaunch({ url: '/pages/user/user' });
-      },
-      fail: (err) => {
-        console.log(err);
-      },
-    });
+  const handleWxLogin = async (e) => {
+    const res = await request.post(`/user/wechat`, {
+      name: wxNickname.value,
+      avatar: wxAvatar.value,
+      wxtoken: wxtoken.value,
+    })
+    
+    if (res.code !== 200) {
+      return Toast.error('微信登录失败!')
+    }
+    wx.setStorage({ key: 'wxtoken', data: res.data.wxtoken });
+    // wx.reLaunch({ url: '/pages/user/user' });
+    Toast.success('微信登录成功!')
   };
   // 提交账号密码登录
-  const handleLogin = () => {
-    // console.log(e.detail)
+  const handleLogin = async () => {
     if (loginForm.value.username === '') {
-      return wx.showToast({
-        icon: 'error',
-        title: '请输入手机号',
-        mask: true,
-      });
+      return Toast.error('请输入手机号!')
     }
     if (loginForm.value.password === '') {
-      return wx.showToast({ icon: 'error', title: '请输入密码', mask: true });
+      return Toast.error('请输入密码!')
     }
     wx.showLoading({ title: '正在登录', mask: true });
-    login({ token: loginForm.value.username, mode: 'normal' }).then((res) => {
-      console.log(res);
-      if (res.code !== 200) {
-        return wx.showToast({ icon: 'error', title: '登录失败!' });
-      }
-      wx.hideLoading();
-      wx.setStorage({ key: 'wxtoken', data: '' });
-      wx.setStorage({ key: 'token', data: res.data.token });
-      wx.reLaunch({ url: '/pages/user/user' });
-    });
+    const res = await login({ token: loginForm.value.username, mode: 'normal' })
+    
+    console.log(res);
+    if (res.code !== 200) {
+      return Toast.error('登录失败!')
+    }
+    wx.hideLoading();
+    wx.setStorage({ key: 'wxtoken', data: '' });
+    wx.setStorage({ key: 'token', data: res.data.token });
+    wx.reLaunch({ url: '/pages/user/user' });
   };
-  const handleRegister = (e) => {
+  
+  const handleRegister = async (e) => {
     if (registerForm.value.userName === '') {
-      // return $utils.showToast('请输入手机号', 'error');
+      return Toast.error('请输入手机号!')
     }
     if (registerForm.value.password === '') {
-      // return $utils.showToast('请输入密码', 'error');
+      return Toast.error('请输入密码!')
     }
     if (registerForm.value.password !== registerForm.value.passwordAgain) {
-      // return $utils.showToast('两次密码不一致', 'error');
+      return Toast.error('两次密码不一致!')
     }
     wx.showLoading({ title: '注册中', mask: true });
-    register({
+    const res = await register({
       userName: registerForm.value.userName,
       password: registerForm.value.password,
       token: md5(registerForm.value.userName),
       role: 'user',
-    }).then((res) => {
-      if (res.code !== 200) {
-        // return $utils.showToast('此账号已被注册', 'error', 2000);
-      }
-      // $utils.showToast('注册成功', 'success', 2000, null, null, () => {
-      //   current = 1;
-      // });
-      wx.hideLoading();
-    });
+    })
+    if (res.code !== 200) {
+      return Toast.error('此账号已被注册!',2000)
+    }
+    Toast.success('注册成功!',2000)
+    current.value = 1
+
+    wx.hideLoading();
   };
 
   const back = () => {
