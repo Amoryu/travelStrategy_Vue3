@@ -12,13 +12,60 @@
         "enablePullDownRefresh": false
       }
 
+    }, {
+      "path": "pages/User/User",
+      "style": {
+        "navigationBarTitleText": "",
+        "enablePullDownRefresh": false
+      }
+
     }
   ],
+  "subPackages": [{
+    "root": "pages/subPackages", //子包的根目录
+    "pages": [
+      {
+        "path": "Setting/Setting",
+        "style": {
+          "navigationBarTitleText": "",
+          "enablePullDownRefresh": false
+        }
+
+      }
+        ,{
+                    "path" : "UserInfo/UserInfo",
+                    "style" :                                                                                    
+                {
+                    "navigationBarTitleText": "",
+                    "enablePullDownRefresh": false
+                }
+                
+                }
+            ]
+  }],
+  "tabBar": {
+    "list": [{
+      "pagePath": "pages/index/index",
+      "text": "攻略",
+      "iconPath": "/static/assets/startegy.png",
+      "selectedIconPath": "/static/assets/startegy_selected.png"
+    }, {
+      "pagePath": "pages/User/User",
+      "text": "我的",
+      "iconPath": "/static/assets/user.png",
+      "selectedIconPath": "/static/assets/user_selected.png"
+    }]
+  },
   "globalStyle": {
     "navigationBarTextStyle": "black",
     "navigationBarTitleText": "uni-app",
+    "navigationStyle": "custom",
+    "enablePullDownRefresh": true,
     "navigationBarBackgroundColor": "#F8F8F8",
     "backgroundColor": "#F8F8F8",
+    "app-plus": {
+      "background": "#efeff4"
+    },
     "usingComponents": {
       "van-icon": "/wxcomponents/@vant/weapp/icon/index",
       "van-nav-bar": "/wxcomponents/@vant/weapp/nav-bar/index",

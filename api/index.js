@@ -7,7 +7,7 @@ const request = (url, method, data = {}) => {
       method,
       data,
       header:{
-        "content-type": method === "DELETE" ? "application/x-www-form-urlencoded" :'application/json'
+        "content-type": 'application/json'
       },
       success: res => { resolve(res.data) },
       fail: err => { reject(err) }

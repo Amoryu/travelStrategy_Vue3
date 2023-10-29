@@ -148,7 +148,7 @@ s
     console.log(wxtoken.value);
     token.value = wx.getStorageSync('token');
     if (wxtoken.value || token.value) {
-      wx.reLaunch({ url: '/pages/user/user' });
+      wx.reLaunch({ url: '/pages/User/User' });
     }
   });
 
@@ -181,15 +181,14 @@ s
     if (!isAgree.value) {
       return Toast.error('请勾选服务协议')
     }
-    // if (wxtoken.value) {
-    //   return wx.reLaunch({ url: '/pages/user/user' });
-    // }
+    if (wxtoken.value) {
+      return wx.reLaunch({ url: "/pages/User/User", });
+    }
     wx.showLoading();
     const data = await Promisic(wx.getSetting)();
     if(data.authSetting['scope.userInfo']){
       const res = await Promisic(wx.login)();
       const result = await request.get(`/wechat/auth`,{ code: res.code })
-      console.log(result)
       if (result.code !== 200) {
         return Toast.error('微信登录未授权!')
       }
@@ -212,8 +211,8 @@ s
       return Toast.error('微信登录失败!')
     }
     wx.setStorage({ key: 'wxtoken', data: res.data.wxtoken });
-    // wx.reLaunch({ url: '/pages/user/user' });
     Toast.success('微信登录成功!')
+    wx.reLaunch({ url: "/pages/User/User", });
   };
   // 提交账号密码登录
   const handleLogin = async () => {
@@ -233,7 +232,7 @@ s
     wx.hideLoading();
     wx.setStorage({ key: 'wxtoken', data: '' });
     wx.setStorage({ key: 'token', data: res.data.token });
-    wx.reLaunch({ url: '/pages/user/user' });
+    wx.reLaunch({ url: '/pages/User/User' });
   };
   
   const handleRegister = async (e) => {
@@ -263,7 +262,7 @@ s
   };
 
   const back = () => {
-    wx.navigateTo({ url: '/pages/login/login' });
+    wx.navigateTo({ url: '/pages/Login/Login' });
   };
 
   const quitWxAuth = () => {
